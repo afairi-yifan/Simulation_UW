@@ -13,7 +13,7 @@ if __name__ == '__main__':
     start_month = [0]
     simu = Simulation(config.data_path, input_data, start_month)
     # simu.run_for_this_month()
-    for _ in range(13):
+    for _ in range(3):
         simu.run_for_this_month()
     # print(simu.output_full_report())
     simu.output_to_excel()

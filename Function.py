@@ -223,8 +223,8 @@ class Cohort:
                 row[para] = row['NOPAT_Output_Cash_flow'] - row['Working_capital_Output_Cash_flow']
                 print(self.financial_report.loc[work_cap_timeline, nopat], self.financial_report.loc[work_cap_timeline, wc])
             elif para == 'Accumulated_Output_Cash_flow':
+                ##TODO: make accumulated and ROIC correct after the pitch deck.
                 op = 'Operating_cash_flow_Output_Cash_flow'
-
                 self.financial_report.loc[work_cap_timeline, para] = self.financial_report.loc[:work_cap_timeline, op].sum()
                 print('The value of operating cash is :', self.financial_report.loc[work_cap_timeline, 'Operating_cash_flow_Output_Cash_flow'])
                 row[para] = self.financial_report.loc[:self.current_month - 1, op].sum() + row[op]
