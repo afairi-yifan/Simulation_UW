@@ -25,10 +25,10 @@ class MyTestCase(unittest.TestCase):
                              f'The output at month {st_month} '
                              f'is not consistent with groundtruth. \n\n Output dataframe: {test_df} \n\n Ground Truth: {truth_round}')
 
-    def test_pd(self):
-        a = pd.DataFrame(1, index=['f', 'f'], columns=['t', 'g'])
-        x = pd.DataFrame(1, index=['f', 'f'], columns=['t', 'g'])
-        self.assertTrue(a.equals(x), f'some cells are not the same')
+    # def test_pd(self):
+    #     a = pd.DataFrame(1, index=['f', 'f'], columns=['t', 'g'])
+    #     x = pd.DataFrame(1, index=['f', 'f'], columns=['t', 'g'])
+    #     self.assertTrue(a.equals(x), f'some cells are not the same')
 
 
     def make_truth_label(self, var_para):
