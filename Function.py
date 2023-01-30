@@ -14,6 +14,7 @@ ONE_YR = 12
 class Simulation:
     '''
     Input file contains two kinds of files, global data and distinct input data file.
+    group_cohort: dict[ month: cohort,...]
     '''
     def __init__(self, input_path, list_cohort_name, cohort_start_date):
         self.create_new_test = None
@@ -36,7 +37,6 @@ class Simulation:
         dataloader = DataLoader(self.input_path, self.list_cohort_name)
         self.list_output_vars = dataloader.give_outputs_variables()[1]
         self.test_output_var = dataloader.give_outputs_variables()[2]
-        # print(self.list_output_vars)
         list_data = dataloader.extract_data_from_list()
         self.collection_cohort_data = dict(zip(self.list_cohort_name, list_data))
 
@@ -52,15 +52,12 @@ class Simulation:
         :return:
         '''
         assert len(self.cohort_start_date) == len(self.list_cohort_name), f'Cohort name and start date input are not the same.'
-        self.create_new_test = False
         for numb in range(len(self.cohort_start_date)):
             if self.current_month == self.cohort_start_date[numb]:
                 new_cohort = Cohort(self.collection_cohort_data[self.list_cohort_name[numb]], self.current_month, self.list_output_vars)
                 self.group_cohort[self.current_month] = new_cohort
-                self.create_new_test = True
                 assert len(new_cohort.output_financial_report().index) == len(self.group_cohort[0].output_financial_report().index), f'new cohort should have the same month.'
         self.run_all_cohort()
-        # self.create_test_dataframe_start_month(self.create_new_test)
         self.current_month += 1
 
     def run_all_cohort(self):
@@ -106,13 +103,17 @@ class Simulation:
     ###########
     # Test Output Results
     ###########
+    def output_numb_cohort_to_excel(self, numb, save_path):
+        first_month = self.group_cohort[numb].output_financial_report()
+        output = first_month.transpose()
+        with ExcelWriter(f'{save_path}') as writer:
+            output.to_excel(writer, sheet_name='test_month')
+
     def create_test_output_var(self):
         var_list = []
         var_list = self.test_output_var
-        print(var_list)
         for _ in range(5):
             var_list.pop(-1)
-        # var_list.pop(-1)
         assert len(var_list) == 18, f'The number of the list is not correct'
         assert var_list[-1] == 'Working_capital_ow_Distribution_channel_Output_Cash_flow', f'Output var list is not correct.'
         return var_list
@@ -148,42 +149,62 @@ class Simulation:
 
 class Cohort:
     def __init__(self, input_dataframe, now_month, list_output_vars):
+        ## special Para
+        self.retention_yr = [0.8, 0.95]
+        self.retention_month = [x ** (1/12) for x in self.retention_yr]
         ## Paras
         self.start_month = now_month
         self.current_month = now_month
         self.financial_report = pd.DataFrame()
-        self.input_data = input_dataframe
+        self.input_data = input_dataframe.copy()
         self.list_output_vars = list_output_vars
         self.init_canvas_before_start_month()
-        ## special Para
-        self.retention_yr = [0.8, 0.95]
-        self.retention_month = [x ** (1/12) for x in self.retention_yr]
+        self.store_data = self.create_book_keeping_row()
+
+
 
     def init_canvas_before_start_month(self):
         self.financial_report = pd.DataFrame(0, index=range(LOWER_BOUND_MONTH, self.start_month), columns=self.input_data.columns)
+        self.input_data.loc['Value', 'Number_of_Customer_Output_Cash_flow'] = self.input_data.loc['Value', 'Start_Customer_Input_var']
+        self.input_data.loc['Value', 'Retention_Input_var'] = self.retention_month[0]
         # take the cohort -- g1 as canvas and update data from there
+
+    def create_book_keeping_row(self):
+        temp = self.input_data.copy()
+        temp.index = [self.current_month]
+        row = temp.loc[self.current_month].copy()
+        return row
 
     def update_one_month(self):
         self.inflate_premium()
+        self.customers_after_retention()
+        current_row = self.create_temp_row_to_update()
+        wc_timeline = self.current_month - ONE_YR
+        new_row = self.update_output_var(current_row, wc_timeline)
+        self.append_this_month_to_report(new_row)
+        self.current_month += 1
+
+    def create_temp_row_to_update(self):
         temp = self.input_data.copy()
         temp.index = [self.current_month]
-        current_row = temp.loc[self.current_month].copy()
+        current_row = temp.loc[self.current_month]
         current_row['Month_Input_var'] = self.current_month
-        ## Update starting premium let everything easy
-        wc_timeline = self.current_month - ONE_YR
-        current_row = self.update_output_var(current_row, wc_timeline)
-        self.append_this_month_to_report(current_row)
-        self.current_month += 1
-        #TODO: update the retention at the end of the fucking test
-        self.consider_retention()
+        return current_row
 
-    def consider_retention(self):
-        #TODO: update the retention at the end of the fucking program
+
+    def customers_after_retention(self):
         assert len(self.input_data.index) == 1, f'Buggy'
-        if self.current_month - self.start_month <= ONE_YR:
-            self.input_data.loc['Value', 'Start_Customer_Input_var'] *= self.retention_month[0]
+        if self.current_month != self.start_month:
+            if (self.current_month - self.start_month) <= ONE_YR:
+                self.input_data.loc['Value', 'Retention_Input_var'] = self.retention_month[0]
+                self.input_data.loc['Value', 'Number_of_Customer_Output_Cash_flow'] *= self.retention_month[0]
+
+            else:
+                self.input_data.loc['Value', 'Retention_Input_var'] = self.retention_month[-1]
+                self.input_data.loc['Value', 'Number_of_Customer_Output_Cash_flow'] *= self.retention_month[-1]
         else:
-            self.input_data.loc['Value', 'Start_Customer_Input_var'] *= self.retention_month[1]
+            pass
+        assert (self.input_data.loc['Value', 'Number_of_Customer_Output_Cash_flow']) != (self.financial_report.loc[(self.current_month-1), 'Number_of_Customer_Output_Cash_flow']), f'Hug bug at month {self.current_month}'
 
 
     def inflate_premium(self):
@@ -196,7 +217,7 @@ class Cohort:
         work_cap_timeline = timeline
         for para in self.list_output_vars:
             if para == 'Transacted_premium_volume_Output_Profit_Loss' or para == 'Transacted_premium_volume_Output_Cash_flow':
-                row[para] = row['Start_avg_premium_Input_var'] * row['Start_Customer_Input_var']
+                row[para] = row['Start_avg_premium_Input_var'] * row['Number_of_Customer_Output_Cash_flow']
             elif para == 'ow_Origination_Output_Profit_Loss' or para == 'ow_Origination_Output_Cash_flow':
                 ratio = self.get_first_or_second_yr_ratio(row['Revenue_share_of_premium_for_new_business_Input_var'], row['Revenue_share_of_premium_for_renewal_Input_var'])
                 row[para] = row['Transacted_premium_volume_Output_Profit_Loss'] * ratio
@@ -208,12 +229,10 @@ class Cohort:
             elif para == 'ow_Back_office_app_Output_Profit_Loss' or para == 'ow_Back_office_app_Output_Cash_flow':
                 ratio = self.get_first_or_second_yr_ratio(0, row['Backoffice_Relative_to_premium_based_on_improvement_first_year_Input_var'])
                 row[para] = row['Transacted_premium_volume_Output_Profit_Loss'] * ratio
-            elif para == 'Platform_Output_Profit_Loss':
+            elif para == 'Platform_Output_Profit_Loss' or para == 'Platform_Output_Cash_flow':
                 assert not np.isnan(row['ow_Back_office_app_Output_Profit_Loss']), f'back office not exist first.'
                 assert not np.isnan(row['ow_Underwriting_engine_Output_Profit_Loss']), f'uw engine not exist first.'
                 row[para] = row['ow_Back_office_app_Output_Profit_Loss'] + row['ow_Underwriting_engine_Output_Profit_Loss']
-            elif para == 'Platform_Output_Cash_flow':
-                row[para] = row['Platform_Output_Profit_Loss']
             elif para == 'Revenue_Output_Profit_Loss':
                 row[para] = row['Platform_Output_Profit_Loss'] + row['Network_Output_Profit_Loss']
             elif para == 'Revenue_Output_Cash_flow':
@@ -285,18 +304,16 @@ class Cohort:
                 wc = 'Working_capital_Output_Cash_flow'
                 self.financial_report.loc[work_cap_timeline, para] = self.financial_report.loc[work_cap_timeline, nopat] - self.financial_report.loc[work_cap_timeline, wc]
                 row[para] = row['NOPAT_Output_Cash_flow'] - row['Working_capital_Output_Cash_flow']
-                # print(self.financial_report.loc[work_cap_timeline, nopat], self.financial_report.loc[work_cap_timeline, wc])
-            elif para == 'Number_of_Customer_Output_Cash_flow':
-                row[para] = row['Start_Customer_Input_var']
             elif para == 'Accumulated_Output_Cash_flow':
                 ##TODO: make accumulated and ROIC correct after the pitch deck.
                 op = 'Operating_cash_flow_Output_Cash_flow'
                 self.financial_report.loc[work_cap_timeline, para] = self.financial_report.loc[:work_cap_timeline, op].sum()
-                # print('The value of operating cash is :', self.financial_report.loc[work_cap_timeline, 'Operating_cash_flow_Output_Cash_flow'])
                 row[para] = self.financial_report.loc[:self.current_month - 1, op].sum() + row[op]
             elif para == 'ROIC_Output_Cash_flow':
                 ac = 'Accumulated_Output_Cash_flow'
                 row[para] = row[ac] / abs(self.financial_report.loc[work_cap_timeline, ac])
+            else:
+                pass
         return row
 
     def get_first_or_second_yr_ratio(self, ratio1, ratio2):
@@ -310,13 +327,11 @@ class Cohort:
     def append_this_month_to_report(self, row):
         row_to_concat = pd.DataFrame(row).transpose()
         self.financial_report = pd.concat([self.financial_report, row_to_concat], axis=0)
-        # print(self.financial_report.copy())
 
     def update_financial_report(self):
         return None
 
     def output_financial_report(self):
-        # print(self.financial_report)
         return self.financial_report.copy()
 
 

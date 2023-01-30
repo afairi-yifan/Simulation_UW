@@ -20,14 +20,18 @@ if __name__ == '__main__':
     simu = Simulation(config.data_pitch_path, input_data, start_month)
     simu.run_for_whole_time_span()
     print(simu.output_full_report())
-    simu.output_to_excel()
+    # simu.output_to_excel()
+    # simu.output_numb_cohort_to_excel(0, config.test_path_1)
+    simu.output_numb_cohort_to_excel(25, config.test_path_2)
     ##### Now test the retention ratio
-    # input_data = ['G1', 'G1', 'G1']
-    # start_month = [0, 30, 40]
+    # input_data = ['G1']
+    # start_month = [0]
+    # input_data = 90 * ['G1']
+    # start_month = range(90)
     # simu = Simulation(config.data_pitch_path, input_data, start_month)
     # # simu.run_for_whole_time_span()
-    # # simu.run_for_this_month()
-    # for _ in range(26):
+    # for _ in range(120):
     #     simu.run_for_this_month()
-    # print(simu.output_full_report())
-    # simu.output_to_excel()
+    # # print(simu.output_full_report())
+    # # print(simu.output_full_report())
+    # simu.output_first_cohort_to_excel()

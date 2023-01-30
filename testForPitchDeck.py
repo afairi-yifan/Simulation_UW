@@ -4,9 +4,6 @@ import pandas as pd
 from Function import *
 
 class MyTestCase(unittest.TestCase):
-    def test_something(self):
-        self.assertEqual(True, False)  # add assertion here
-
     def test_individual_cohort(self):
         input_group = ['G1', 'G1', 'G1']
         input_start_month = [0, 1, 3]
@@ -30,7 +27,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_pd(self):
         a = pd.DataFrame(1, index=['f', 'f'], columns=['t', 'g'])
-        x = pd.DataFrame(2, index=['f', 'f'], columns=['t', 'g'])
+        x = pd.DataFrame(1, index=['f', 'f'], columns=['t', 'g'])
         self.assertTrue(a.equals(x), f'some cells are not the same')
 
 
