@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
-import config
+from Config import config
 from pandas import ExcelWriter
 import random
-import copy
+
 ###########
 # Constants
 ###########
@@ -29,7 +29,7 @@ class Simulation:
         self.test_output_var = []
         self.init_data()
         self.test_output_var = self.create_test_output_var()
-        ## test dataframe case
+        ## Tests dataframe case
         self.test_cohort_df = {}
 
 
@@ -93,7 +93,7 @@ class Simulation:
         output_file = self.output_full_report(False)
         output = output_file.transpose()
         with ExcelWriter(f'{config.save_path}') as writer:
-            output.to_excel(writer, sheet_name='test')
+            output.to_excel(writer, sheet_name='Tests')
 
     def nice_print_report_format(self):
         print('Current simulation month is: ', self.current_month - 1)
@@ -101,7 +101,7 @@ class Simulation:
         print('This financial report is \n')
 
     ###########
-    # Test Output Results
+    # Tests Output Results
     ###########
     def output_numb_cohort_to_excel(self, numb, save_path):
         first_month = self.group_cohort[numb].output_financial_report()
@@ -133,7 +133,7 @@ class Simulation:
     def output_test_start_month_cohort(self):
         return self.test_cohort_df.copy()
 
-    # TODO: test the addition array when those array merges.
+    # TODO: Tests the addition array when those array merges.
     def assert_addition_reports(self, add_1, add_2, fina_report):
         vars = self.test_output_var.copy()
         column_numb = random.randint(0, len(vars)-1)
@@ -141,7 +141,7 @@ class Simulation:
         month_rand = random.randint(0, self.current_month - 1)
         one_rand = add_1.loc[month_rand, column_rand]
         second_rand = add_2.loc[month_rand, column_rand]
-        # Random index or columns variables and test them
+        # Random index or columns variables and Tests them
         assert one_rand + second_rand == fina_report.loc[month_rand, column_rand], f'At month {month_rand} and column {column_rand}, the addition is not successful.'
 
 

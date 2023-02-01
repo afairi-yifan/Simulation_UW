@@ -1,7 +1,0 @@
-data_path = 'data/input/data_uw.xlsx'
-data_pitch_path = 'data/input/data_pitch.xlsx'
-data_pitch_best_case_path = 'data/input/data_pitch_best_case.xlsx'
-save_path = 'data/output/output.xlsx'
-ground_truth_path = 'data/input/ground_truth_data.xlsx'
-test_path_1 = 'data/output/first_month_cohort.xlsx'
-test_path_2 = 'data/output/random_month_cohort.xlsx'

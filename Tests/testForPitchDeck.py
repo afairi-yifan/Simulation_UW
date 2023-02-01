@@ -1,7 +1,5 @@
 import unittest
-import config
-import pandas as pd
-from Function import *
+from Functions.Functions import *
 
 class MyTestCase(unittest.TestCase):
     def test_individual_cohort(self):
