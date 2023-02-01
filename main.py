@@ -17,12 +17,12 @@ if __name__ == '__main__':
         group += 12 * [title]
     input_data = group.copy()
     start_month = long
-    simu = Simulation(config.data_pitch_path, input_data, start_month)
+    simu = Simulation(config.data_pitch_best_case_path, input_data, start_month)
     simu.run_for_whole_time_span()
     print(simu.output_full_report())
-    # simu.output_to_excel()
-    # simu.output_numb_cohort_to_excel(0, config.test_path_1)
-    simu.output_numb_cohort_to_excel(25, config.test_path_2)
+    simu.output_to_excel()
+    simu.output_numb_cohort_to_excel(1, config.test_path_1)
+    simu.output_numb_cohort_to_excel(16, config.test_path_2)
     ##### Now test the retention ratio
     # input_data = ['G1']
     # start_month = [0]

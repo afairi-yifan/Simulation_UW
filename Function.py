@@ -93,7 +93,7 @@ class Simulation:
         output_file = self.output_full_report(False)
         output = output_file.transpose()
         with ExcelWriter(f'{config.save_path}') as writer:
-            output.to_excel(writer, sheet_name='Simulation_output_test')
+            output.to_excel(writer, sheet_name='test')
 
     def nice_print_report_format(self):
         print('Current simulation month is: ', self.current_month - 1)
